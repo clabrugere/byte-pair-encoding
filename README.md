@@ -37,11 +37,11 @@ from tokenizer import BPETokenizer
 with open('../tests/corpus.txt', 'r') as f:
     corpus = f.read()
 
-# train the tokenizer on it. By default, <BOS> and <EOS> special tokens are automatically registered
+# train the tokenizer on it
 tokenizer = BPETokenizer(max_vocab_size=2048)
 tokenizer.train(corpus)
 
-# register additional special tokens. Its ID is automatically determined as the next available integer.
+# register additional special tokens. IDs are automatically determined as the next available integer.
 tokenizer.register_special_token("<EOP>")
 
 # encode some string to get indices ready to be passed to a language model

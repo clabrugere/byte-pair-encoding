@@ -38,14 +38,18 @@ def test_merge_pair(input: list[int], pair: tuple[int, int], index: int, expecte
 
 
 @pytest.mark.parametrize(
-    "tokenizer, corpus, input",
+    "tokenizer, corpus, input, add_special",
     [
-        ("tokenizer", "corpus", "some regular sentence."),
-        ("tokenizer", "corpus", "<BOS>now with special tokens<EOS>"),
-        ("tokenizer", "corpus", "😱 didn't appear in the corpus"),
+        ("tokenizer", "corpus", "some regular sentence.", False),
+        ("tokenizer", "corpus", "<BOS>now with special tokens<EOS>", True),
+        ("tokenizer", "corpus", "😱 didn't appear in the corpus", False),
     ],
     indirect=["tokenizer", "corpus"],
 )
-def test_tokenizer(tokenizer: BPETokenizer, corpus: str, input: str) -> None:
+def test_tokenizer(tokenizer: BPETokenizer, corpus: str, input: str, add_special: bool) -> None:
+    if add_special:
+        tokenizer.register_special_token("<BOS>")
+        tokenizer.register_special_token("<EOS>")
+
     tokenizer.train(corpus)
     assert tokenizer.decode(tokenizer.encode(input)) == input

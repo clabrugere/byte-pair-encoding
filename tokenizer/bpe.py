@@ -38,7 +38,7 @@ class BPETokenizer:
         max_vocab_size: int,
     ):
         if max_vocab_size <= 256:
-            logger.warning("max_vocab_size is smaller than 256 so no pair merges will be done.")
+            raise ValueError(f"max_vocab_size must be at least 256, got '{max_vocab_size}'.")
 
         self.max_vocab_size = max_vocab_size
         self.reset()
@@ -53,9 +53,6 @@ class BPETokenizer:
         self.special_to_id = {}
         self.id_to_special = {}
 
-        self.register_special_token("<BOS>")
-        self.register_special_token("<EOS>")
-
     def register_special_token(self, token: str) -> None:
         if token not in self.special_to_id:
             logger.info(f"Registering special token {token} with id {self.next_id}.")
@@ -66,10 +63,8 @@ class BPETokenizer:
 
     def train(self, input: str, stop_early: bool = False) -> None:
         indices = string_to_byte(input, "utf-8")
-        num_iter = 0
 
         while self.vocab_size < self.max_vocab_size:
-            num_iter += 1
             pair, count = most_frequent_pair(indices)
 
             if stop_early and count == 1:
@@ -80,7 +75,9 @@ class BPETokenizer:
             self.id_to_token[self.next_id] = self.id_to_token[pair[0]] + self.id_to_token[pair[1]]
             self.next_id += 1
 
-        logger.warning(f"Stopping compression after {num_iter} pair merges with vocab size of {self.vocab_size}.")
+        logger.warning(
+            f"Stopping compression after {len(self.pairs)} pair merges with vocab size of {self.vocab_size}."
+        )
 
     def _encode_non_special(self, input: str) -> list[int]:
         indices = string_to_byte(input, "utf-8")
@@ -96,8 +93,11 @@ class BPETokenizer:
         return indices
 
     def encode(self, input: str) -> list[int]:
-        special_pattern = re.compile(f"({'|'.join(re.escape(t) for t in self.special_to_id.keys())})")
-        splits = special_pattern.split(input)
+        if len(self.special_to_id) > 0:
+            special_pattern = re.compile(f"({'|'.join(re.escape(t) for t in self.special_to_id.keys())})")
+            splits = special_pattern.split(input)
+        else:
+            splits = [input]
 
         indices = []
 
@@ -124,4 +124,4 @@ class BPETokenizer:
 
     @property
     def vocab_size(self) -> int:
-        return self.next_id
+        return self.next_id + 1
