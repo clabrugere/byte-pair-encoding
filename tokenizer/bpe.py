@@ -61,7 +61,7 @@ class BPETokenizer:
             self.id_to_special[self.next_id] = token
             self.next_id += 1
 
-    def train(self, input: str, stop_early: bool = False) -> None:
+    def train(self, input: str, stop_early: bool = False, verbose: bool = False) -> None:
         indices = string_to_byte(input, "utf-8")
 
         while self.vocab_size < self.max_vocab_size:
@@ -71,13 +71,16 @@ class BPETokenizer:
                 break
 
             indices = merge_pair(indices, pair, self.next_id)
+            new_token = self.id_to_token[pair[0]] + self.id_to_token[pair[1]]
             self.pairs[pair] = self.next_id
-            self.id_to_token[self.next_id] = self.id_to_token[pair[0]] + self.id_to_token[pair[1]]
+            self.id_to_token[self.next_id] = new_token
+
+            if verbose:
+                logger.info(f"Merged ids {pair} as new token {new_token} with id {self.next_id}.")
+
             self.next_id += 1
 
-        logger.warning(
-            f"Stopping compression after {len(self.pairs)} pair merges with vocab size of {self.vocab_size}."
-        )
+        logger.info(f"Stopping compression after {len(self.pairs)} pair merges with vocab size of {self.vocab_size}.")
 
     def _encode_non_special(self, input: str) -> list[int]:
         indices = string_to_byte(input, "utf-8")
@@ -124,4 +127,4 @@ class BPETokenizer:
 
     @property
     def vocab_size(self) -> int:
-        return self.next_id + 1
+        return self.next_id

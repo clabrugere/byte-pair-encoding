@@ -53,3 +53,4 @@ def test_tokenizer(tokenizer: BPETokenizer, corpus: str, input: str, add_special
 
     tokenizer.train(corpus)
     assert tokenizer.decode(tokenizer.encode(input)) == input
+    assert tokenizer.next_id == len(tokenizer.id_to_token) + len(tokenizer.id_to_special)
